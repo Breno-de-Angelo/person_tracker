@@ -99,22 +99,23 @@ def save_tracker(in_file, out_file, model, frame_size, fps, door_vertices):
         out.write(image_drawn)
     out.release()
 
-def main(inputFile, outputFile, modelPath):
+
+def main(input_file, output_file, model_path):
     logging.basicConfig(level=logging.ERROR)
-    model = YOLO(modelPath)
+    model = YOLO(model_path)
     while True:
-        door_vertices = get_xy_position_from_video(inputFile)
+        door_vertices = get_xy_position_from_video(input_file)
         if len(door_vertices) % 4 == 0:  # Assert a valid number of vertices
             break
         logging.error("Select a number of vertices multiple of 4")
-    save_tracker(inputFile, outputFile, model, (848, 480), 30, door_vertices)
+    save_tracker(input_file, output_file, model, (848, 480), 30, door_vertices)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Script to count the number of people inside each room using 1 camera")
 
-    parser.add_argument('-inputFile', required=True, help="Input file path")
-    parser.add_argument('-outputFile', required=True, help="Output file path")
+    parser.add_argument('-input_file', required=True, help="Input file path")
+    parser.add_argument('-output_file', required=True, help="Output file path")
     parser.add_argument('-model', required=True, help="Model path")
 
     args = parser.parse_args()
