@@ -61,9 +61,9 @@ def save_tracker(in_file, out_file, model, frame_size, fps):
 
 
 def main():
-    model = YOLO("yolov8n.pt")
-    in_file = "hallway.mp4"
-    out_file = "hallway_detected.mp4"
+    model = YOLO("models/yolov8n.pt")
+    in_file = "videos/hallway.mp4"
+    out_file = "detected_videos/hallway_detected.mp4"
     save_tracker(in_file, out_file, model, (848, 480), 30)
 
 
