@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from get_xy_position_from_video import get_xy_position_from_video
 import logging
+import argparse
 
 
 def save_tracker(in_file, out_file, model, frame_size, fps, door_vertices):
@@ -98,19 +99,24 @@ def save_tracker(in_file, out_file, model, frame_size, fps, door_vertices):
         out.write(image_drawn)
     out.release()
 
-
-def main():
+def main(inputFile, outputFile, modelPath):
     logging.basicConfig(level=logging.ERROR)
-    model = YOLO("models/yolov8n.pt")
-    in_file = "videos/hallway.mp4"
-    out_file = "detected_videos/hallway_detected.mp4"
+    model = YOLO(modelPath)
     while True:
-        door_vertices = get_xy_position_from_video(in_file)
+        door_vertices = get_xy_position_from_video(inputFile)
         if len(door_vertices) % 4 == 0:  # Assert a valid number of vertices
             break
         logging.error("Select a number of vertices multiple of 4")
-    save_tracker(in_file, out_file, model, (848, 480), 30, door_vertices)
+    save_tracker(inputFile, outputFile, model, (848, 480), 30, door_vertices)
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description="Script to count the number of people inside each room using 1 camera")
+
+    parser.add_argument('-inputFile', required=True, help="Input file path")
+    parser.add_argument('-outputFile', required=True, help="Output file path")
+    parser.add_argument('-model', required=True, help="Model path")
+
+    args = parser.parse_args()
+
+    main(args.inputFile, args.outputFile, args.model)
