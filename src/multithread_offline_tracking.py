@@ -14,10 +14,10 @@ def save_tracker(in_file, out_file, model, frame_size, fps):
 def main():
     model1 = YOLO("../models/yolov8n.pt")
     model2 = YOLO("../models/yolov8n.pt")
-    in_file1 = "test1.mp4"
-    in_file2 = "test2.mp4"
-    out_file1 = "out1.mp4"
-    out_file2 = "out2.mp4"
+    in_file1 = "../videos/hallway.mp4"
+    in_file2 = "../videos/hallway.mp4"
+    out_file1 = "../detected_videos/out1.mp4"
+    out_file2 = "../detected_videos/out2.mp4"
     tracker_thread1 = threading.Thread(target=save_tracker, args=(in_file1, out_file1, model1, (480, 848), 30),
                                        daemon=True)
     tracker_thread2 = threading.Thread(target=save_tracker, args=(in_file2, out_file2, model2, (480, 640), 30),
