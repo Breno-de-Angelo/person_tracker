@@ -6,9 +6,8 @@ import logging
 import argparse
 
 
-def save_tracker(in_file, out_file, model, frame_size, fps, door_vertices):
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use 'XVID' for AVI or 'mp4v' for MP4
-    out = cv2.VideoWriter(out_file, fourcc, fps, frame_size)
+def my_tracker(in_file, model, file_index, door_vertices):
+    video = cv2.VideoCapture(in_file)  # Read the video file
     last_people_detection = []
     number_of_doors = int(len(door_vertices) / 4)
     draw_door = []
@@ -37,7 +36,11 @@ def save_tracker(in_file, out_file, model, frame_size, fps, door_vertices):
                 min_y = item[i][1]
         text_position.append((int((min_x + max_x) / 2), int((min_y + max_y) / 2)))
 
-    for result in model.track(source=in_file, stream=True, classes=0):  # for each frame
+    while True:
+        ret, frame = video.read()  # Read the video frames
+        if not ret:  # Exit the loop if no more frames
+            break
+        result = model.track(frame, persist=True, classes=0)[0]
         current_people_detection = []
         logging.debug(f"last_people_detection: {last_people_detection}")
         for box, cls in zip(result.boxes.xywh, result.boxes.cls):  # for each detected object
@@ -96,28 +99,34 @@ def save_tracker(in_file, out_file, model, frame_size, fps, door_vertices):
                                         color=(255, 0, 0), thickness=2)
             image_drawn = cv2.putText(img=image_drawn, text=str(count[i]), org=text_position[i],
                                       fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(0, 255, 0), thickness=2)
-        out.write(image_drawn)
-    out.release()
+        cv2.imshow(f"Tracking_Stream_{file_index}", image_drawn)
+        key = cv2.waitKey(1)
+        if key == ord('q'):
+            break
+    # Release video sources
+    video.release()
 
 
-def main(input_file, output_file, model_path):
+def main(input_file, model_path):
     logging.basicConfig(level=logging.ERROR)
     model = YOLO(model_path)
+    if input_file.isnumeric():
+        input_file = int(input_file)
+        input_file = int(input_file)
     while True:
         door_vertices = get_xy_position_from_video(input_file)
         if len(door_vertices) % 4 == 0:  # Assert a valid number of vertices
             break
         logging.error("Select a number of vertices multiple of 4")
-    save_tracker(input_file, output_file, model, (848, 480), 30, door_vertices)
+    my_tracker(input_file, model, 1, door_vertices)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Script to count the number of people inside each room using 1 camera")
 
     parser.add_argument('-input_file', required=True, help="Input file path")
-    parser.add_argument('-output_file', required=True, help="Output file path")
     parser.add_argument('-model', required=True, help="Model path")
 
     args = parser.parse_args()
 
-    main(args.input_file, args.output_file, args.model)
+    main(args.input_file, args.model)
