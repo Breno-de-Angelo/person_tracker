@@ -5,6 +5,11 @@ from get_xy_position_from_video import get_xy_position_from_video
 import logging
 import argparse
 
+from paho.mqtt import client as mqtt_client
+broker = ''
+port = 0
+client_id = f''
+client = None
 
 def my_tracker(in_file, model, file_index, door_vertices):
     video = cv2.VideoCapture(in_file)  # Read the video file
@@ -69,6 +74,8 @@ def my_tracker(in_file, model, file_index, door_vertices):
                         logging.debug(f"door_id = {door_id}")
                         if dist > -(box[2] * 1.1):  # person close enough to the door
                             count[door_id] = count[door_id] - 1
+                            if(count[door_id] == 0):
+                                client.publish(f'chaveamento-energia/{door_id}', 0)
                         logging.debug(f"count = {count[door_id]}")
         logging.debug(f"updated last_people_detection: {last_people_detection}")
         logging.debug(f"current_people_detection: {current_people_detection}")
@@ -91,6 +98,8 @@ def my_tracker(in_file, model, file_index, door_vertices):
                 if dist > -(box[2] * 1.1):  # person close enough to the door
                     # print('+1')
                     count[door_id] = count[door_id] + 1
+                    if(count[door_id] >= 1):
+                        client.publish(f'chaveamento-energia/{door_id}', 1)
                 logging.debug(f"dist = {dist}")
                 logging.debug(f"count = {count[door_id]}")
         image_drawn = result.plot()
@@ -120,6 +129,24 @@ def main(input_file, model_path):
         logging.error("Select a number of vertices multiple of 4")
     my_tracker(input_file, model, 1, door_vertices)
 
+def connect_mqtt():
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            print("Connected to MQTT Broker!")
+        else:
+            print("Failed to connect, return code %d\n", rc)
+
+    client = mqtt_client.Client(client_id)
+    # client.username_pw_set(username, password)
+    client.on_connect = on_connect
+    client.connect(broker, port)
+    return client
+
+
+def publish(client, door):
+    msg_count = 1
+    client.publish(topic, door)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Script to count the number of people inside each room using 1 camera")
@@ -129,4 +156,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    client = connect_mqtt()
+
     main(args.input_file, args.model)
+
+
+
